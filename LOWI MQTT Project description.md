@@ -32,8 +32,12 @@ Documentation References
 	* short manual:		https://www.2-wire.net/wp-content/uploads/2021/08/QS30EN-LoWi3-1.pdf
 	* manual:			https://www.2-wire.net/wp-content/uploads/2021/11/LoWi3-manual-v1.7-EN-1.pdf
 - ORES
-	* 
+	* Emectricity meter	https://netoresorchardcms.blob.core.windows.net/media/Default/Documents/Depliant_fonction_compteur_FR.pdf
 	
-Desired Features:
-- ...
+Desired Application Features 
+- Simple web app - mobile app or adaptive design later
+- Graphics / bar graphs to show real time power consumption into house / export onto electricity grid, with history
+- Logging / showing index evolution, including import - export net index
+- storing key data in data base, including with export to files in CSV or XLS format
+
 
