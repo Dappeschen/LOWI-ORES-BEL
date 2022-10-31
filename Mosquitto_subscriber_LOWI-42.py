@@ -2,6 +2,7 @@
 Created on 24 oct. 2022
 
 @author: Dappeschen
+#tested with PyDev Eclipse IDE 2209
 '''
 
 import paho.mqtt.client as mqtt
