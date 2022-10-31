@@ -17,7 +17,7 @@ client.connect(mqttBroker)
 
 client.loop_start()
 
-client.subscribe("<put your LOWIS 12 digit MAC address here>/PUB/CH0")
+client.subscribe("<put your LOWI's 12 digit MAC address here>/PUB/CH0")
 client.on_message=on_message 
 
 time.sleep(300000) #wait 
