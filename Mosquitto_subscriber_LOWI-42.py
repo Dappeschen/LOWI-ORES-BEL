@@ -20,13 +20,22 @@ def on_message(client, userdata, message):
     #prepare to print MQTT received message's payload, preceeded by date/time stamp - in Central Europe Time (CET) time zone 
     json_string = str(message.payload.decode("utf-8"))
     
-    #claculate length / number of characters of message's payload
+    #calculate length / number of characters of message's payload
     payload_length = len(json_string)
     
     #convert payload info in string "json_string" in json format into Python string format
     y = json.loads(json_string) 
     
-    print("LOWI's MAC Address: ", y["ident"])
+    #Extract LOWI MAC address info
+    LOWI_MAC_address_label = "LOWI's MAC Address: "
+    LOWI_MAC_address_data = y["ident"]
+    print(LOWI_MAC_address_label, LOWI_MAC_address_data)
+    
+    #Extract LOWI device channel info
+    LOWI_device_channel_label = "LOWI's device channel: "
+    LOWI_device_channel_data = y["device_CH"]
+    print(LOWI_device_channel_label, LOWI_device_channel_data)
+    
     
     #print MQTT received message's payload, preceeded by date/time stamp - in Central Europe Time (CET) time zone 
     print(dt_eur.strftime("%Y:%m:%d %H:%M:%S %Z")," ", json_string)
