@@ -1,14 +1,14 @@
 '''
 Created on        24 October 2022
-Last updated on   20 November 2022
+Last updated on   27 November 2022
 @author:          Dappeschen
 Installation      Elctrical energy meter:
                       SAGEMCOM  
                       EAN 541449400001820905
-                      ORES Bemgium
-                      installed 19 may 2022
+                      ORES Belgium
+                      installed 19 May 2022
                   Data provider
-                      2Wire LOWI3 P1 WIFI Dongel P1 port, Qonnex Belgium, MAC address 3494546c709b
+                      2Wire LOWI3 P1 WIFI Dongel P1 port, Qonnex bvba, 9310 Aalst, Belgium, MAC address 3494546c709b
 '''
 
 import paho.mqtt.client as mqtt
@@ -16,8 +16,11 @@ import time
 import datetime
 from datetime import datetime
 from datetime import date
+from dateutil.relativedelta import relativedelta
 import pytz                         # for time zone()
 import json
+from numpy import power
+from pygments.styles.paraiso_dark import ORANGE
  
 # Constants, written in upper case 
 FILENAME = "received_messages.csv"
@@ -25,11 +28,15 @@ TOPIC = "3494546c709b/PUB/CH0"
 MQTT_BROKER = "test.mosquitto.org"
 CLIENT_ID = "LOWI-42"
 HEADERS = ("ident","device_CH","Name","Type","Units","U","I","PI","PE","T","CIH","CIL","CEH","CEL","CG","CW")
+MAINS_REFERENCE_VOLTAGE_LEVEL = 230
+
 # Text formatting constants
 GREEN = '\033[92m'                                                            
 BLUE = '\033[94m'
+RED = '\033[91m'
 ENDC = '\033[0m'  
 BOLD = '\033[1m'
+BLINK ='\033[5m'
 UNDERLINE = '\033[4m'
                  
 # Date constants
@@ -46,9 +53,6 @@ def on_message(client, userdata, message):
     #prepare to print MQTT received message's payload 
     json_string = str(message.payload.decode("utf-8"))
     
-    #calculate length / number of characters of message's payload
-    payload_length = len(json_string)
-    
     #convert payload info in string "json_string" in json format into Python string format
     payload_dict = json.loads(json_string) 
     
@@ -57,9 +61,10 @@ def on_message(client, userdata, message):
      
     print(UNDERLINE + "INSTALLATION" + ENDC)
     print("Meter installation date" + " "*26  + str(METER_INSTALLATION_DATE))
-    meter_last_index_reset_date = "19-05-2022"
-    print("Meter last index reset date" + " "*22 + meter_last_index_reset_date)
-    
+    meter_last_index_reset_date = date(2022, 5, 19)
+    meter_last_index_reset_date_str = str(meter_last_index_reset_date)
+    print("Meter last index reset date" + " "*22 + meter_last_index_reset_date_str)
+       
     print()
     print()
     
@@ -67,83 +72,132 @@ def on_message(client, userdata, message):
     
     #Calculate metr operation durations
     today = date.today()
+    today_str = str(today)
     #today = datetime.now()
-    meter_days_in_operation = abs(METER_INSTALLATION_DATE - today)
-    #meter_days_since_last_index_reset_date = abs(datetime.strptime(meter_last_index_reset_date, '%d-%m-%Y') - today)
+    meter_total_days_in_operation = abs(METER_INSTALLATION_DATE - today)
     #Print current date
-    print("Date"  + " "*44, dt_eur.strftime("%d-%m-%Y"))
-    meter_time_in_operation_str = str(meter_days_in_operation)
+    print("Date"  + " "*44, str(today))
+    meter_total_days_in_operation_str = str(meter_total_days_in_operation)
+    meter_total_months_in_operation = meter_total_days_in_operation/ 30
     #Print meter total time in operation duration
-    print("Meter Total Days in Operation since Installation " + meter_time_in_operation_str[0:8])
-    print("Meter Days in Operation since last Index Reset   " + meter_time_in_operation_str[0:8])
+    print("Meter Total Days in Operation since Installation " + meter_total_days_in_operation_str[0:8])
+    
+    meter_days_in_operation_since_last_reset = abs(meter_last_index_reset_date - today)
+    meter_days_in_operation_since_last_reset_str = str(meter_days_in_operation_since_last_reset)
+    print("Meter Days in Operation since last Index Reset   " + meter_days_in_operation_since_last_reset_str[0:8])
+    
+    meter_next_index_reset_date = meter_last_index_reset_date + relativedelta(years=1)
+    meter_next_index_reset_date_str = str(meter_next_index_reset_date)
+    print("Meter next reset date " + " "*27 + meter_next_index_reset_date_str)
+    
+    # get the difference between wo dates as timedelta object
+    date_1 = meter_next_index_reset_date_str
+    date_2 = today_str
+    start = datetime.strptime(date_1, "%Y-%m-%d")
+    end =   datetime.strptime(date_2, "%Y-%m-%d") 
+    diff = end.date() - start.date()
+    diff_int = int(diff.days)
+    print("Meter days until next reset" + " "*22 + str(abs(diff_int)) + " days")
+    
+    #meter_days_in_operation_until_next_reset = 
+    
+    meter_days_in_operation_until_next_reset = meter_next_index_reset_date - relativedelta(days = 4)
+    #print("Meter Days until next reset" + " "*10 + str(meter_days_in_operation_until_next_reset) + " days")
+    
     #Print current time
-    print("Time" + " "*44, dt_eur.strftime("%H:%M:%S %Z"))
+    print("Local time last measurement" + " "*21, dt_eur.strftime("%H:%M:%S %Z"))
     
-    #Get and display counter status for energy imported
-    counter_status_energy_imported_low = payload_dict["CIL"]
-    counter_status_energy_imported_high = payload_dict["CIH"]
-    counter_status_energy_imported = int((int(counter_status_energy_imported_low) + int(counter_status_energy_imported_high)) / 1000)
-    print(BLUE + "Counter Status Energy Imported", format(int(counter_status_energy_imported), '22d'), "kWh" + ENDC)
+    #Get data, calculate and display meter status for energy imported
+    meter_status_energy_imported_low = payload_dict["CIL"]
+    meter_status_energy_imported_high = payload_dict["CIH"]
+    meter_status_energy_imported = int((int(meter_status_energy_imported_low) + int(meter_status_energy_imported_high)) / 1000)
+    print(BLUE + "Meter Status Energy Imported", format(int(meter_status_energy_imported), '24d'), "kWh" + ENDC)
     
-    #Get and display counter status for energy exported
-    counter_status_energy_exported_low = payload_dict["CEL"]
-    counter_status_energy_exported_high = payload_dict["CEH"]
-    counter_status_energy_exported = int((int(counter_status_energy_exported_low) + int(counter_status_energy_exported_high)) / 1000)
-    print(GREEN + "Counter Status Energy Exported", format(int(counter_status_energy_exported), '22d'), "kWh" + ENDC)
+    #Get data, calculate and display meter status for energy imported
+    meter_status_energy_exported_low = payload_dict["CEL"]
+    meter_status_energy_exported_high = payload_dict["CEH"]
+    meter_status_energy_exported = int((int(meter_status_energy_exported_low) + int(meter_status_energy_exported_high)) / 1000)
+    print(GREEN + "Meter Status Energy Exported", format(int(meter_status_energy_exported), '24d'), "kWh" + " "*10 + "injected into energy distribution grid since meter installation date" + ENDC)
     
-    print('-' * 60)
+    print('-' * 140)
         
     #Calculate and display current energy balance exported - imported
-    current_energy_balance = counter_status_energy_exported - counter_status_energy_imported
+    current_energy_balance = meter_status_energy_exported - meter_status_energy_imported
     if current_energy_balance > 0:
-      textcolor = GREEN
+      text_color = GREEN
       import_export = "+"
     else:
-      textcolor = BLUE  
+      text_color = BLUE  
       import_export = "-"
-    print(BOLD + textcolor + "Energy Balance" + " "*32 + import_export + format(current_energy_balance,'6d')+ " kWh" + ENDC)    
+    print(BOLD + text_color + "Energy Balance" + " "*31 + import_export + format(current_energy_balance,'7d') + " kWh" + " "*10 + "still available free of charge from the grid as 'a battery' / buffer" + ENDC)    
+    print(text_color + "Energy Balance per days remaining" + " "*13 + format(abs(int(current_energy_balance / diff_int)), '5d') + " kWh" + " "*12 + "per day remaining until next reset" + ENDC)    
     
-    print('-' * 60)
+    print('-' * 140)
       
-    #display current voltage
-    print("Voltage"  + " "*37, format(int(payload_dict["U"]),'7d'), " Volt  " )
+    #display current mains voltage and variance
+    mains_voltage = int(payload_dict["U"])
+    mains_voltage_variance = mains_voltage - MAINS_REFERENCE_VOLTAGE_LEVEL
+    if mains_voltage_variance > 0: 
+       mains_voltage_variance_posneg = "+"
+    else:
+       mains_voltage_variance_posneg = ""
+    
+    if mains_voltage_variance > 10: 
+       text_color = RED
+    elif mains_voltage_variance < -10:
+       text_color = RED
+    else:
+        text_color = ENDC
+    print("Voltage"  + " "*37, format(mains_voltage,'7d'), " V" + " "*12 + text_color + "(Variance - ref. 230V normal: " + mains_voltage_variance_posneg + str(mains_voltage_variance) + "V)" + ENDC)
     
     #calculate and display current current
-    if int(payload_dict["PI"]) > 0:
-      textcolor = BLUE
+    current = int(payload_dict["I"])/1000
+    current_str = str(current)
+    if current > 0:
+      text_color = BLUE
+      #current_str =  (str(current))
     else:
-      textcolor = ENDC  
-    print(textcolor + "Current"  + " "*37, format(int(int(payload_dict["I"]) / 1000),'7d'), " Ampere" + ENDC)
+      text_color = GREEN  
+      current_str = str(format(str(int(int(payload_dict["PE"]) / int(payload_dict["U"]))),'7d'))
+       
+    #print(text_color + "Current"  + " "*37, format(int(int(payload_dict["I"]) / 1000),'7d'), " Ampere" + ENDC)
+    print(text_color + "Current"  + " "*39, '{:05.2f}'.format(current) + "  A" + ENDC)
     
-    #display current imported power
-    if int(payload_dict["PI"]) > 0:
-      textcolor = BLUE
-    else:
-      textcolor = ENDC  
-    print(textcolor + "Power Import" + " "*32, format(int(payload_dict["PI"]),'7d'), " Watt" + ENDC)
     
-    #display current imported power
-    if int(payload_dict["PE"]) > 0:
-      textcolor = GREEN
+    #display current net power value exported / exported
+    if int(payload_dict["PI"]) > 0:
+      current_power = int(payload_dict["PI"])
+      text_color = BLUE
+      power_mode ="Import"
+      solar_generation_message = ""
     else:
-      textcolor = ENDC  
-    print("Power Export" + " "*32, format(int(payload_dict["PE"]),'7d'), " Watt")
+      current_power = int(payload_dict["PE"])
+      text_color = GREEN
+      power_mode ="Export"  
+      solar_generation_message = "currently not self-consumed"
+    print(text_color + "Power " + power_mode + " "*32, format(current_power,'7d'), " W" + " "*12 + solar_generation_message + ENDC)
+    
           
-          #,["I"],["PI"],["PE"],["T"],["CIH"],["CIL"],["CEH"],["CEL"],["CG"],["CW"])
-    # Clearing the Screen
-    #os.system('cls')
-   
+    #,["I"],["PI"],["PE"],["T"],["CIH"],["CIL"],["CEH"],["CEL"],["CG"],["CW"])
     
+    
+def main():
+    client = mqtt.Client(CLIENT_ID)
+    
+    client.subscribe(TOPIC)
+    
+    client.on_connect=on_connect
+    
+    client.on_message=on_message 
+    
+    client.connect(MQTT_BROKER) 
+    
+    client.loop_forever()
+
+
 #main    
-#Preparing to connect to free MQTT test / broker server MOSQUITTO.org
-client = mqtt.Client(CLIENT_ID)
+if __name__ == "__main__":
+    main()
 
 
-client.subscribe(TOPIC)
-client.on_connect=on_connect
-client.on_message=on_message 
-
-client.connect(MQTT_BROKER) 
-
-client.loop_forever()
 
