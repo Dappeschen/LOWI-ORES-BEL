@@ -1,6 +1,6 @@
 '''
 Created on        24 October 2022
-Last updated on   27 November 2022
+Last updated on   10 December 2022
 @author:          Dappeschen
 Installation      Elctrical energy meter:
                       SAGEMCOM  
@@ -99,11 +99,8 @@ def on_message(client, userdata, message):
     diff_int = int(diff.days)
     print("Meter days until next reset" + " "*22 + str(abs(diff_int)) + " days")
     
-    #meter_days_in_operation_until_next_reset = 
-    
     meter_days_in_operation_until_next_reset = meter_next_index_reset_date - relativedelta(days = 4)
-    #print("Meter Days until next reset" + " "*10 + str(meter_days_in_operation_until_next_reset) + " days")
-    
+       
     #Print current time
     print("Local time last measurement" + " "*21, dt_eur.strftime("%H:%M:%S %Z"))
     
@@ -152,17 +149,13 @@ def on_message(client, userdata, message):
     
     #calculate and display current current
     current = int(payload_dict["I"])/1000
-    current_str = str(current)
     if current > 0:
       text_color = BLUE
-      #current_str =  (str(current))
     else:
       text_color = GREEN  
-      current_str = str(format(str(int(int(payload_dict["PE"]) / int(payload_dict["U"]))),'7d'))
+      current = format(str(int(int(payload_dict["PE"]) / int(payload_dict["U"]))),'7d')
        
-    #print(text_color + "Current"  + " "*37, format(int(int(payload_dict["I"]) / 1000),'7d'), " Ampere" + ENDC)
     print(text_color + "Current"  + " "*39, '{:05.2f}'.format(current) + "  A" + ENDC)
-    
     
     #display current net power value exported / exported
     if int(payload_dict["PI"]) > 0:
