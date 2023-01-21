@@ -1,6 +1,6 @@
 '''
 Created on        24 October 2022
-Last updated on   24 December 2022
+Last updated on   21 January 2023
 @author           Dappeschen
 Installation      location
                     rdj241360W
@@ -63,10 +63,11 @@ def on_message(client, userdata, message):
     print('\n' * 150)
      
     print(UNDERLINE + "INSTALLATION" + ENDC)
-    print("Meter installation date" + " "*26  + str(METER_INSTALLATION_DATE))
+    print("Metered data ID " + " "*33 + payload_dict["ident"] + " / " + payload_dict["Name"] +" / " + payload_dict["device_CH"] )
+    print("Meter installation date" + " "*26  + str(METER_INSTALLATION_DATE) + " "*2 + "Meter initial index 'Low':    0kWh  Meter initial index 'High':    0kWh")
     meter_last_index_reset_date = date(2022, 5, 19)
     meter_last_index_reset_date_str = str(meter_last_index_reset_date)
-    print("Meter last index reset date" + " "*22 + meter_last_index_reset_date_str)
+    print("Meter last index reset date" + " "*22 + meter_last_index_reset_date_str + " "*2 + "Meter last reset index 'Low': 0kWh  Meter last reset index 'High': 0kWh")
        
     print()
     print()
@@ -113,16 +114,16 @@ def on_message(client, userdata, message):
     meter_status_energy_imported_low = payload_dict["CIL"]
     meter_status_energy_imported_high = payload_dict["CIH"]
     meter_status_energy_imported = int((int(meter_status_energy_imported_low) + int(meter_status_energy_imported_high)) / 1000)
-    print(BLUE + " "*6 + "counter reading energy imported", format(int(meter_status_energy_imported), '15d'), "kWh" + " "*10 + "retrieved from grid" + ENDC)
+    print(BLUE + " "*6 + "counter reading energy imported", format(int(meter_status_energy_imported), '15d'), "kWh" + " "*4 + "retrieved from grid" + ENDC)
     
     # Get data, calculate and display meter status / index for energy imported
     meter_status_energy_exported_low = payload_dict["CEL"]
     meter_status_energy_exported_high = payload_dict["CEH"]
     meter_status_energy_exported = int((int(meter_status_energy_exported_low) + int(meter_status_energy_exported_high)) / 1000)
-    print(GREEN + " "*29 + "exported", format(int(meter_status_energy_exported), '15d'), "kWh" + " "*10 + "injected into energy distribution grid since meter installation date" + ENDC)
+    print(GREEN + " "*29 + "exported", format(int(meter_status_energy_exported), '15d'), "kWh" + " "*4 + "injected into energy distribution grid since meter installation date" + ENDC)
     
     delta_meter_status = meter_status_energy_exported - meter_status_energy_imported
-    print(" "*29 + "delta" + " "*4 + format(int(delta_meter_status), '15d'), "kWh" + " "*10 + "export - import")
+    print(" "*29 + "delta" + " "*4 + format(int(delta_meter_status), '15d'), "kWh" + " "*4 + "export - import")
     
     # Print a line of dashes
     print('-' * 140)
@@ -135,8 +136,8 @@ def on_message(client, userdata, message):
     else:
       text_color = BLUE  
       import_export = "-"
-    print(BOLD + text_color + " "*6 + "Energy balance remaining til next reset" + " "*2 + UNDERLINE + import_export + format(current_energy_balance,'5d') + " kWh" + ENDC + text_color + BOLD + " "*10 + "still available free of charge from the grid as 'a battery' / buffer" + ENDC)    
-    print(text_color + " "*46 + format(abs(int(current_energy_balance / diff_int)), '7d') + " kWh" + " "*10 + "per day" + ENDC)    
+    print(BOLD + text_color + " "*6 + "Energy balance remaining til next reset" + " "*2 + UNDERLINE + import_export + format(current_energy_balance,'5d') + " kWh" + ENDC + text_color + BOLD + " "*4 + "still available free of charge from the grid as 'battery'" + ENDC)    
+    print(text_color + " "*46 + format(abs(int(current_energy_balance / diff_int)), '7d') + " kWh" + " "*4 + "per day" + ENDC)    
     
     # Print a line of dashes
     print('-' * 140)
@@ -155,7 +156,7 @@ def on_message(client, userdata, message):
        text_color = RED
     else:
         text_color = ENDC
-    print(" "*6 + "Voltage"  + " "*31, format(mains_voltage,'7d'), " V" + " "*12 + text_color + "(Variance - ref. 230V normal: " + mains_voltage_variance_posneg + str(mains_voltage_variance) + "V)" + ENDC)
+    print(" "*6 + "Voltage"  + " "*31, format(mains_voltage,'7d'), " V" + " "*6 + text_color + "(Variance - ref. 230V normal: " + mains_voltage_variance_posneg + str(mains_voltage_variance) + "V)" + ENDC)
     
     # Calculate and display current current
     current = int(payload_dict["I"])/1000
@@ -167,20 +168,20 @@ def on_message(client, userdata, message):
       #current = format(str(int(int(payload_dict["PE"]) / int(payload_dict["U"]))),'7d')
       current = int(payload_dict["PE"]) / int(payload_dict["U"])
       current_flow_direction = "currently flowing from the house into the public energy grid"
-    print(text_color + " "*6 + "Current"  + " "*33, '{:05.2f}'.format(current) + "  A" + " "*12 + current_flow_direction + ENDC)
+    print(text_color + " "*6 + "Current"  + " "*33, '{:05.2f}'.format(current) + "  A" + " "*6 + current_flow_direction + ENDC)
     
     # Display current net power value exported / exported
     if int(payload_dict["PI"]) > 0:
       current_power = int(payload_dict["PI"])
       text_color = BLUE
       power_mode ="Import"
-      solar_generation_message = ""
+      solar_generation_message = "from the public energy grid"
     else:
       current_power = int(payload_dict["PE"])
       text_color = GREEN
       power_mode ="Export"  
       solar_generation_message = "currently not self-consumed"
-    print(text_color + " "*6 + "Power " + power_mode + " "*28 + format(current_power,'7d'), "W" + " "*12 + solar_generation_message + ENDC)
+    print(text_color + " "*6 + "Power " + power_mode + " "*28 + format(current_power,'7d'), "W" + " "*6 + solar_generation_message + ENDC)
     
             
 def main():
