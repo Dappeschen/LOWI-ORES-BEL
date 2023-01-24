@@ -197,7 +197,7 @@ def main():
     client.loop_forever()
 
 
-# Main    
+# Program / script entry    
 if __name__ == "__main__":
     main()
 
