@@ -10,7 +10,7 @@ Installation      location
                       ORES Belgium
                       installed 19 May 2022
                   data provider
-                      2Wire LOWI3 P1 WIFI Dongel P1 port, Qonnex bvba, 9310 Aalst, Belgium, MAC address 3494546c709b
+                      2Wire LOWI3 P1 WIFI Dongel P1 port, Qonnex bvba, 9310 Aalst, Belgium, MAC address <put devices MAC address here>
 '''
 
 
