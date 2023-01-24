@@ -25,8 +25,7 @@ import json
 #from numpy import power
  
 # Constants
-FILENAME =      "received_messages.csv"
-TOPIC =         "3494546c709b/PUB/CH0"
+TOPIC =         "<put devices MAC address here>/PUB/CH0"
 MQTT_BROKER =   "test.mosquitto.org"
 CLIENT_ID =     "LOWI-42"
 HEADERS =       ("ident","device_CH","Name","Type","Units","U","I","PI","PE","T","CIH","CIL","CEH","CEL","CG","CW")
