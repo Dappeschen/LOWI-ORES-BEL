@@ -1,16 +1,18 @@
 '''
 Created on        24 October 2022
-Last updated on   21 January 2023
+Last updated on   29 January 2023
 @author           Dappeschen
 Installation      location
                     rdj241360W
                   electrical energy meter:
                       SAGEMCOM  
-                      EAN 541449400001820905
+                      EAN <...>
                       ORES Belgium
                       installed 19 May 2022
                   data provider
-                      2Wire LOWI3 P1 WIFI Dongel P1 port, Qonnex bvba, 9310 Aalst, Belgium, MAC address <put devices MAC address here>
+                      2-Wire LOWI3 P1 WIFI Dongel P1 port, Qonnex bvba, 9310 Aalst, Belgium, 2-wire.net
+Project / 
+Code focus        Deploying free Flespi MQTT server / broker / service: mqtt.flespi.io
 '''
 
 
@@ -25,8 +27,11 @@ import json
 #from numpy import power
  
 # Constants
-TOPIC =         "<put devices MAC address here>/PUB/CH0"
-MQTT_BROKER =   "test.mosquitto.org"
+FILENAME =      "received_messages.csv"
+TOPIC_LOWI =     "<put Plug's MAC address here>/PUB/CH0"
+MQTT_BROKER =   "mqtt.flespi.io"
+MQTT_TOKEN =    "<put flespi user account token here>"
+MQTT_PW =       "put flespi user accountpassword here"
 CLIENT_ID =     "LOWI-42"
 HEADERS =       ("ident","device_CH","Name","Type","Units","U","I","PI","PE","T","CIH","CIL","CEH","CEL","CG","CW")
 MAINS_REFERENCE_VOLTAGE_LEVEL = 230
@@ -45,8 +50,10 @@ METER_INSTALLATION_DATE = date(2022, 5, 19)
 
 
 def on_connect(client, userdata, flags, rc):
+    # Provide user name = Token and password to access MQTT broker service / account
+    client.username_pw_set(username = MQTT_TOKEN, password = MQTT_PW)
     # Subscribe after each connect
-    client.subscribe(TOPIC)
+    client.subscribe(TOPIC_LOWI)
     
 def on_message(client, userdata, message):
     # Date and Tie in Central Europe / Brussels, Belgium
@@ -182,11 +189,18 @@ def on_message(client, userdata, message):
       solar_generation_message = "currently not self-consumed"
     print(text_color + " "*6 + "Power " + power_mode + " "*28 + format(current_power,'7d'), "W" + " "*6 + solar_generation_message + ENDC)
     
+    #play with plug
+    #read 
+    
+    plug_status = "OFF"
+    send_msg = {
+        'CH1': plug_status
+                }
             
 def main():
     client = mqtt.Client(CLIENT_ID)
     
-    client.subscribe(TOPIC)
+    client.subscribe(TOPIC_LOWI)
     
     client.on_connect=on_connect
     
@@ -197,7 +211,7 @@ def main():
     client.loop_forever()
 
 
-# Program / script entry    
+# Main    
 if __name__ == "__main__":
     main()
 
